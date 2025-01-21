@@ -1,0 +1,50 @@
+---
+- name: Deploy application to Kubernetes
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Apply Kubernetes manifests
+      kubernetes.core.k8s:
+        kubeconfig: /mnt/c/Users/Soham/.kube/config
+
+        state: present  # Ensure the resource is present (you can use absent to delete resources)
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: myapp-deployment
+            labels:
+              app: myapp
+          spec:
+            replicas: 2
+            selector:
+              matchLabels:
+                app: myapp
+            template:
+              metadata:
+                labels:
+                  app: myapp
+              spec:
+                containers:
+                  - name: myapp
+                    image: "sohamgulhane/firstimage:latest"  # Replace with your image
+                    ports:
+                      - containerPort: 8080
+
+    - name: Expose deployment via a service
+      kubernetes.core.k8s:
+        kubeconfig: /path/to/your/kubeconfig  # Path to kubeconfig file (if needed)
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: myapp-service
+          spec:
+            selector:
+              app: myapp
+            ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 8080
+            type: LoadBalancer
